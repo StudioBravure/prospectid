@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Prospector</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
+            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Antigravity Prospector
+            </h1>
+            <div class="space-x-4 text-sm font-medium text-slate-500">
+                <a href="#" @click="currentView = 'campaigns'"
+                    :class="{'text-blue-600': currentView==='campaigns'}">Campaigns</a>
+                <a href="#" @click="currentView = 'runs'" :class="{'text-blue-600': currentView==='runs'}">Runs</a>
+                <a href="#" @click="currentView = 'leads'" :class="{'text-blue-600': currentView==='leads'}">Leads</a>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 max-w-7xl mx-auto w-full">
+
+            <!-- Campaigns View -->
+            <div v-if="currentView === 'campaigns'" class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Campaigns</h2>
+                    <button @click="createDummyCampaign"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        + New Campaign
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="c in campaigns" :key="c.id"
+                        class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                        <h3 class="font-bold text-lg mb-2">{{ c.name }}</h3>
+                        <div class="text-sm text-slate-500 mb-4">
+                            ID: {{ c.id }} <br>
+                            Tenant: {{ c.tenant_id }}
+                        </div>
+                        <button @click="runCampaign(c.id)"
+                            class="w-full bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200">
+                            ▶ Start Run
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Runs View -->
+            <div v-if="currentView === 'runs'" class="space-y-6">
+                <h2 class="text-2xl font-bold">Active Runs</h2>
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3">ID</th>
+                                <th class="px-6 py-3">Campaign ID</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Started At</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="r in runs" :key="r.id">
+                                <td class="px-6 py-4">#{{ r.id }}</td>
+                                <td class="px-6 py-4">{{ r.campaign_id }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded-full text-xs font-bold"
+                                        :class="{'bg-green-100 text-green-700': r.status==='completed', 'bg-blue-100 text-blue-700': r.status==='running'}">
+                                        {{ r.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">{{ r.started_at }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Leads View -->
+            <div v-if="currentView === 'leads'">
+                <h2 class="text-2xl font-bold mb-6">Leads Intelligence</h2>
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3">Company</th>
+                                <th class="px-6 py-3">City</th>
+                                <th class="px-6 py-3">Contacts</th>
+                                <th class="px-6 py-3">Enrichment</th>
+                                <th class="px-6 py-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr v-for="l in leads" :key="l.id" class="hover:bg-slate-50 transition">
+                                <td class="px-6 py-4">
+                                    <div class="font-bold text-slate-900">{{ l.name }}</div>
+                                    <div class="text-xs text-slate-400">{{ l.domain || 'No Domain' }}</div>
+                                </td>
+                                <td class="px-6 py-4 text-slate-600">{{ l.city }}</td>
+                                <td class="px-6 py-4">
+                                    <div v-if="l.email" class="text-green-600 text-sm">📧 {{ l.email }}</div>
+                                    <div v-else class="text-slate-400 text-sm">No Email</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div v-if="l.cnpj"
+                                        class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded w-fit">CNPJ Valid
+                                    </div>
+                                    <div v-else class="text-xs text-slate-400">Basic</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 bg-slate-100 rounded text-xs">{{ l.lead_status }}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        const API_URL = "http://localhost:8000/api/v1";
+
+        createApp({
+            setup() {
+                const currentView = ref('campaigns');
+                const campaigns = ref([]);
+                const runs = ref([]);
+                const leads = ref([]);
+
+                const fetchData = async () => {
+                    try {
+                        const [cRes, rRes, lRes] = await Promise.all([
+                            fetch(`${API_URL}/campaigns`),
+                            fetch(`${API_URL}/runs`),
+                            fetch(`${API_URL}/leads`)
+                        ]);
+                        campaigns.value = await cRes.json();
+                        runs.value = await rRes.json();
+                        leads.value = await lRes.json();
+                    } catch (e) { console.error("API Error", e); }
+                };
+
+                const createDummyCampaign = async () => {
+                    const payload = {
+                        name: "Demo Campaign " + Date.now(),
+                        goal: "Test",
+                        regions: [{ country: "BR", state: "SP", city: "São Paulo", radius_km: 10 }],
+                        keywords: ["agencia marketing"],
+                        google_categories: { include: ["marketing_agency"], exclude: [] }
+                    };
+                    await fetch(`${API_URL}/campaigns`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    fetchData();
+                };
+
+                const runCampaign = async (id) => {
+                    await fetch(`${API_URL}/campaigns/${id}/run`, { method: "POST" });
+                    currentView.value = 'runs';
+                    fetchData();
+                };
+
+                onMounted(() => {
+                    fetchData();
+                    setInterval(fetchData, 5000); // Poll every 5s
+                });
+
+                return { currentView, campaigns, runs, leads, createDummyCampaign, runCampaign };
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
